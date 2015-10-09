@@ -12,12 +12,12 @@ def calcCoordinates(start_x, start_y, angle, radius):
     return str(x1) + ' ' + str(y1)
 
 
-def getHourAngle(h):
-    return h % 12 * 360 / 12
+def getHourAngle(h, m):
+    return (360 + (90 - (h % 12 * 360 / 12))) % 360 - (360 / 12 * m / 60)
 
 
 def getMinuteAngle(m):
-    return m * 360 / 60
+    return (360 + (90 - (m * 360 / 60))) % 360
 
 
 def gradToRad(grad):
@@ -28,9 +28,10 @@ if __name__ == "__main__":
     with open('W:\\input.txt') as f:
         iterator = iter(f)
         next(iterator)
-        for time in next(iterator).split():
+        times = next(iterator).split()
+        for time in times:
             splitted = time.split(':')
             hours = splitted[0]
             minutes = splitted[1]
-            print(calcCoordinates(START_X, START_Y, float(gradToRad(float(getHourAngle(int(hours))))), 6), end=' ')
-            print(calcCoordinates(START_X, START_Y, float(gradToRad(float(getMinuteAngle(int(minutes))))), 9), end=' ')
+            print(calcCoordinates(START_X, START_Y, gradToRad(float(getHourAngle(int(hours), int(minutes)))), 6), end=' ')
+            print(calcCoordinates(START_X, START_Y, gradToRad(float(getMinuteAngle(int(minutes)))), 9), end=' ')
