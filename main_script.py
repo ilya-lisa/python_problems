@@ -1,4 +1,5 @@
 from time import time
+
 __author__ = 'Patrikeev Ilya'
 
 all_numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D', 'E', 'F']
@@ -18,9 +19,9 @@ def subtract_one(digits, base, back_offset=0):
 
 
 def get_index_of(number):
-    if number < 10:
-        return number
-    else:
+    # if number < 10:
+    #     return number
+    # else:
         return all_numbers.index(number)
 
 
@@ -31,17 +32,20 @@ def is_zero(digs):
     return True
 
 
-def is_sum_equal(digits_1, digits_2):
+def calc_sum(digits):
     # sums in numeric system with base 10
-    sum_1 = 0
-    for d in digits_1:
-        sum_1 += get_index_of(d)
+    result = 0
+    for d in digits:
+        result += get_index_of(d)
+    return result
 
-    sum_2 = 0
-    for d in digits_2:
-        sum_2 += get_index_of(d)
 
-    return sum_1 == sum_2
+def init_sum_array(sums, digits):
+    while not is_zero(digits):
+        sums.append(calc_sum(digits))
+        subtract_one(digits, b)
+    sums.append(0)
+    sums.sort()
 
 
 if __name__ == "__main__":
@@ -49,33 +53,37 @@ if __name__ == "__main__":
         iterator = iter(f)
         cases = int(next(iterator))
         start = time()
-        current = 1
-        result = ""
+        results = ""
         for data in iterator:
-            innerStart = time()
             n, b = [int(c) for c in data.split(' ')]
 
             if n == 1:
-                result += str(b) + " "
-                print("case " + str(current) + " from " + str(cases) + " finished in " + str(round(time() - innerStart, 2)))
-                current += 1
+                results += str(b) + " "
                 continue
 
             digits = get_max_number(n, b)
             cmp_n = n // 2
             lucky_numbers = 0
-            while not is_zero(digits):
-                if is_sum_equal(digits[:cmp_n], digits[-cmp_n:]):
-                    lucky_numbers += 1
 
-                subtract_one(digits, b)
-
+            sums = []
+            initStart = time()
+            init_sum_array(sums, digits[0:cmp_n])
+            print("initializing sum array is done in " + str(round(time() - initStart, 2)))
+            result = 0
+            row = 1
+            prev = sums[0]
+            for n in range(1, len(sums)):
+                if sums[n] == prev:
+                    row += 1
+                elif row == 1:
+                    result += 1
+                else:
+                    result += row * row
+                    row = 1
+                prev = sums[n]
             # add one to the counter for the number of zeros
-            lucky_numbers += 1
-            result += str(lucky_numbers) + " "
-            print("case " + str(current) + " from " + str(cases) + " finished in " + str(round(time() - innerStart, 2)))
-            current+=1
+            result += 1
+            results += str(result) + " "
         print()
         print("running time: " + str(round(time() - start, 2)))
-        print("\n" + result)
-
+        print("\n" + results)
