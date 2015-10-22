@@ -19,10 +19,7 @@ def subtract_one(digits, base, back_offset=0):
 
 
 def get_index_of(number):
-    # if number < 10:
-    #     return number
-    # else:
-        return all_numbers.index(number)
+    return all_numbers.index(number)
 
 
 def is_zero(digs):
@@ -40,50 +37,62 @@ def calc_sum(digits):
     return result
 
 
-def init_sum_array(sums, digits):
-    while not is_zero(digits):
-        sums.append(calc_sum(digits))
-        subtract_one(digits, b)
-    sums.append(0)
-    sums.sort()
+def add_value(value_map, key, value):
+    if key in value_map:
+        value_map[key] += value
+    else:
+        value_map[key] = value
 
+
+def init_start_data(sums, digits):
+    while not is_zero(digits):
+        add_value(sums, sum(digits), 1)
+        subtract_one(digits, b)
+    sums['0'] = 1
+
+
+def init_sum_array(digits, b):
+    slice = 4
+    sums = {}
+    if len(digits) < slice:
+        init_start_data(sums, digits)
+        return sums
+    else:
+        start_data = {}
+        init_start_data(start_data, digits[:slice])
+        sums = {k: v for k, v in start_data.items()}
+        temp1 = start_data
+        temp2 = {}
+
+        for d in range(0, len(digits) - slice):
+            for i in range(0, get_index_of(b)):
+                for k, v in temp1.items():
+                    new_value = int(k) + i
+                    add_value(sums, new_value, v)
+                    add_value(temp2, new_value, v)
+
+            temp1 = temp2
+            temp2 = {}
+        return sums
 
 if __name__ == "__main__":
     with open('W:\\input.txt') as f:
-        iterator = iter(f)
-        cases = int(next(iterator))
-        start = time()
-        results = ""
-        for data in iterator:
-            n, b = [int(c) for c in data.split(' ')]
+        n, b = [int(c) for c in f.readline().split(' ')]
 
-            if n == 1:
-                results += str(b) + " "
-                continue
-
+        if n == 1:
+            print(b)
+        else:
             digits = get_max_number(n, b)
             cmp_n = n // 2
-            lucky_numbers = 0
+            factor = 1 if n % 2 == 0 else b
 
-            sums = []
             initStart = time()
-            init_sum_array(sums, digits[0:cmp_n])
+            sums = init_sum_array(digits[0:cmp_n], b)
             print("initializing sum array is done in " + str(round(time() - initStart, 2)))
+
             result = 0
-            row = 1
-            prev = sums[0]
-            for n in range(1, len(sums)):
-                if sums[n] == prev:
-                    row += 1
-                elif row == 1:
-                    result += 1
-                else:
-                    result += row * row
-                    row = 1
-                prev = sums[n]
-            # add one to the counter for the number of zeros
-            result += 1
-            results += str(result) + " "
-        print()
-        print("running time: " + str(round(time() - start, 2)))
-        print("\n" + results)
+            for value in sums.values():
+                result += value * value
+
+            result *= factor
+            print(result)
