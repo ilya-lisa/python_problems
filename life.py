@@ -9,22 +9,31 @@ class Cell:
 
 
 class World:
-    MAX_X = 30
-    MAX_Y = 30
-    OFFSET = 8
+    MAX_X = 40
+    MAX_Y = 40
+    OFFSET = 13
 
-    def __init__(self, field):
+    def __init__(self, figure_a, figure_b, figure_x_offset, figure_y_offset):
         self.field = [[] for i in range(World.MAX_X)]
         # extending field
         for y in range(World.MAX_Y):
             for x in range(World.MAX_X):
                 self.field[x].append(Cell(x, y, True))
 
-        for x in range(len(field)):
-            for y in range(len(field[0])):
-                is_empty = (field[x][y] == '-')
+        for x in range(len(figure_a)):
+            for y in range(len(figure_a[0])):
+                is_empty = (figure_a[x][y] == '-')
                 cell = Cell(x + World.OFFSET, y + World.OFFSET, is_empty)
                 self.field[x + World.OFFSET][y + World.OFFSET] = cell
+
+        for x in range(len(figure_b)):
+            for y in range(len(figure_b[0])):
+                is_empty = (figure_b[x][y] == '-')
+                cell = Cell(x + World.OFFSET + figure_x_offset, y + World.OFFSET + figure_y_offset, is_empty)
+                self.field[x + World.OFFSET + figure_x_offset][y + World.OFFSET + figure_y_offset] = cell
+
+        self.prev_gen_cell_number = 0
+        self.unchanged_gen = 0
 
     def do_iteration(self):
         born_cells = []
@@ -45,6 +54,13 @@ class World:
 
         for c in born_cells:
             self.field[c.x][c.y] = Cell(c.x, c.y)
+
+        current_cell_count = self.live_cell_count()
+        if current_cell_count == self.prev_gen_cell_number:
+            self.unchanged_gen += 1
+        else:
+            self.unchanged_gen = 0
+        self.prev_gen_cell_number = current_cell_count
 
     def neighbour_count_of(self, cell):
         result = 0
@@ -108,14 +124,22 @@ class World:
 
 if __name__ == '__main__':
     lines = [[] for i in range(5)]
+
+    glider = [['-', '-', 'X'], ['X', '-', 'X'], ['-', 'X', 'X']]
+    acorn = [['-', '-', 'X'], ['X', '-', 'X'], ['-', '-', '-'], ['-', 'X', '-'], ['-', '-', 'X'], ['-', '-', 'X'],
+              ['-', '-', 'X']]
+
     with open('/home/ipatrikeev/dev/input.txt') as f:
-        for y in range(5):
-            line = list(f.readline().strip())
-            for x in range(7):
-                lines[y].append(line[x])
+        x_offset, y_offset = [int(x) for x in f.readline().split()]
 
-    world = World(lines)
+    world = World(acorn, glider, x_offset, y_offset * -1)
 
-    for i in range(5):
+    iter_count = 0
+    while True:
         world.do_iteration()
-        print(world.live_cell_count(), end=' ')
+        iter_count += 1
+        print(str(iter_count) + ' : ' + str(world.unchanged_gen))
+        if world.unchanged_gen >= 5:
+            break
+
+    print(iter_count, world.live_cell_count())
