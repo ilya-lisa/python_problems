@@ -1,3 +1,6 @@
+import time
+
+
 class Cell:
     def __init__(self, x, y, empty=False):
         self.x = x
@@ -9,9 +12,9 @@ class Cell:
 
 
 class World:
-    MAX_X = 40
-    MAX_Y = 40
-    OFFSET = 13
+    MAX_X = 30
+    MAX_Y = 30
+    OFFSET = 10
 
     def __init__(self, figure_a, figure_b, figure_x_offset, figure_y_offset):
         self.field = [[] for i in range(World.MAX_X)]
@@ -20,17 +23,24 @@ class World:
             for x in range(World.MAX_X):
                 self.field[x].append(Cell(x, y, True))
 
+        self.potential_changes = set()
         for x in range(len(figure_a)):
             for y in range(len(figure_a[0])):
                 is_empty = (figure_a[x][y] == '-')
                 cell = Cell(x + World.OFFSET, y + World.OFFSET, is_empty)
                 self.field[x + World.OFFSET][y + World.OFFSET] = cell
+                if not is_empty:
+                    self.potential_changes.add(cell)
+                    self.potential_changes.update(self.get_neighbour_set(cell))
 
         for x in range(len(figure_b)):
             for y in range(len(figure_b[0])):
                 is_empty = (figure_b[x][y] == '-')
                 cell = Cell(x + World.OFFSET + figure_x_offset, y + World.OFFSET + figure_y_offset, is_empty)
                 self.field[x + World.OFFSET + figure_x_offset][y + World.OFFSET + figure_y_offset] = cell
+                if not is_empty:
+                    self.potential_changes.add(cell)
+                    self.potential_changes.update(self.get_neighbour_set(cell))
 
         self.prev_gen_cell_number = 0
         self.unchanged_gen = 0
@@ -38,22 +48,25 @@ class World:
     def do_iteration(self):
         born_cells = []
         died_cells = []
+        print(str(len(self.potential_changes)))
+        for cell in self.potential_changes:
+            neighbour_count = self.neighbour_count_of(cell)
+            if cell.empty:
+                if neighbour_count == 3:
+                    born_cells.append(cell)
+            elif neighbour_count < 2 or neighbour_count > 3:
+                died_cells.append(cell)
 
-        for i in range(World.MAX_X):
-            for j in range(World.MAX_Y):
-                cell = self.field[i][j]
-                neighbour_count = self.neighbour_count_of(cell)
-                if cell.empty:
-                    if neighbour_count == 3:
-                        born_cells.append(cell)
-                elif neighbour_count < 2 or neighbour_count > 3:
-                    died_cells.append(cell)
-
+        self.potential_changes.clear()
         for c in died_cells:
             self.field[c.x][c.y] = Cell(c.x, c.y, True)
+            self.potential_changes.add(cell)
+            self.potential_changes.update(self.get_neighbour_set(cell))
 
         for c in born_cells:
             self.field[c.x][c.y] = Cell(c.x, c.y)
+            self.potential_changes.add(cell)
+            self.potential_changes.update(self.get_neighbour_set(cell))
 
         current_cell_count = self.live_cell_count()
         if current_cell_count == self.prev_gen_cell_number:
@@ -84,6 +97,20 @@ class World:
         if not self.is_empty_cell(x - 1, y - 1):
             result += 1
 
+        return result
+
+    def get_neighbour_set(self, cell):
+        result = set()
+        x = cell.x
+        y = cell.y
+        result.add(self.field[x - 1][y])
+        result.add(self.field[x - 1][y - 1])
+        result.add(self.field[x][y - 1])
+        result.add(self.field[x + 1][y - 1])
+        result.add(self.field[x + 1][y])
+        result.add(self.field[x + 1][y + 1])
+        result.add(self.field[x][y + 1])
+        result.add(self.field[x - 1][y + 1])
         return result
 
     def is_empty_cell(self, x, y):
@@ -133,13 +160,15 @@ if __name__ == '__main__':
         x_offset, y_offset = [int(x) for x in f.readline().split()]
 
     world = World(acorn, glider, x_offset, y_offset * -1)
-
+    print(world)
     iter_count = 0
     while True:
         world.do_iteration()
         iter_count += 1
         print(str(iter_count) + ' : ' + str(world.unchanged_gen))
+        print(world)
         if world.unchanged_gen >= 5:
             break
+        time.sleep(0.5)
 
     print(iter_count, world.live_cell_count())
