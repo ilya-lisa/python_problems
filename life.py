@@ -12,9 +12,9 @@ class Cell:
 
 
 class World:
-    MAX_X = 30
-    MAX_Y = 30
-    OFFSET = 10
+    MAX_X = 500
+    MAX_Y = 500
+    OFFSET = 200
 
     def __init__(self, figure_a, figure_b, figure_x_offset, figure_y_offset):
         self.field = [[] for i in range(World.MAX_X)]
@@ -48,7 +48,6 @@ class World:
     def do_iteration(self):
         born_cells = []
         died_cells = []
-        print(str(len(self.potential_changes)))
         for cell in self.potential_changes:
             neighbour_count = self.neighbour_count_of(cell)
             if cell.empty:
@@ -59,14 +58,16 @@ class World:
 
         self.potential_changes.clear()
         for c in died_cells:
-            self.field[c.x][c.y] = Cell(c.x, c.y, True)
-            self.potential_changes.add(cell)
-            self.potential_changes.update(self.get_neighbour_set(cell))
+            died_cell = Cell(c.x, c.y, True)
+            self.field[c.x][c.y] = died_cell
+            self.potential_changes.add(died_cell)
+            self.potential_changes.update(self.get_neighbour_set(died_cell))
 
         for c in born_cells:
-            self.field[c.x][c.y] = Cell(c.x, c.y)
-            self.potential_changes.add(cell)
-            self.potential_changes.update(self.get_neighbour_set(cell))
+            born_cell = Cell(c.x, c.y)
+            self.field[c.x][c.y] = born_cell
+            self.potential_changes.add(born_cell)
+            self.potential_changes.update(self.get_neighbour_set(born_cell))
 
         current_cell_count = self.live_cell_count()
         if current_cell_count == self.prev_gen_cell_number:
@@ -103,14 +104,10 @@ class World:
         result = set()
         x = cell.x
         y = cell.y
-        result.add(self.field[x - 1][y])
-        result.add(self.field[x - 1][y - 1])
-        result.add(self.field[x][y - 1])
-        result.add(self.field[x + 1][y - 1])
-        result.add(self.field[x + 1][y])
-        result.add(self.field[x + 1][y + 1])
-        result.add(self.field[x][y + 1])
-        result.add(self.field[x - 1][y + 1])
+        neighbours = [(x - 1, y), (x - 1, y - 1), (x, y - 1), (x + 1, y - 1), (x + 1, y), (x + 1, y + 1), (x, y + 1), (x - 1, y + 1)]
+        for (x, y) in neighbours:
+            norm_x, norm_y = World.normalize_coordinates(x, y)
+            result.add(self.field[norm_x][norm_y])
         return result
 
     def is_empty_cell(self, x, y):
@@ -160,15 +157,12 @@ if __name__ == '__main__':
         x_offset, y_offset = [int(x) for x in f.readline().split()]
 
     world = World(acorn, glider, x_offset, y_offset * -1)
-    print(world)
     iter_count = 0
     while True:
         world.do_iteration()
         iter_count += 1
         print(str(iter_count) + ' : ' + str(world.unchanged_gen))
-        print(world)
         if world.unchanged_gen >= 5:
             break
-        time.sleep(0.5)
 
     print(iter_count, world.live_cell_count())
