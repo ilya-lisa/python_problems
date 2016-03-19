@@ -1,19 +1,8 @@
-import time
-
-
-class Cell:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-    def __str__(self):
-        return '[' + str(self.x) + ',' + str(self.y) + ']'
-
-
 class World:
     MAX_X = 3000
     MAX_Y = 3000
     OFFSET = 1400
+    CELL = 'X'
 
     def __init__(self, figure_a, figure_b, figure_x_offset, figure_y_offset):
         self.life_cell_count = 0
@@ -24,23 +13,25 @@ class World:
 
         self.potential_changes = set()
         for x in range(len(figure_a)):
-            for y in range(len(figure_a[0])):
+            for y in reversed(range(len(figure_a[0]))):
                 is_empty = (figure_a[x][y] == '-')
                 if not is_empty:
-                    cell = Cell(x + World.OFFSET, y + World.OFFSET)
-                    self.field[x + World.OFFSET][y + World.OFFSET] = cell
-                    self.potential_changes.add((cell.x, cell.y))
-                    self.potential_changes.update(self.get_neighbour_set(cell.x, cell.y))
+                    cell_x = x + World.OFFSET
+                    cell_y = y + World.OFFSET
+                    self.field[cell_x][cell_y] = World.CELL
+                    self.potential_changes.add((cell_x, cell_y))
+                    self.potential_changes.update(self.get_neighbour_set(cell_x, cell_y))
                     self.life_cell_count += 1
 
         for x in range(len(figure_b)):
-            for y in range(len(figure_b[0])):
+            for y in reversed(range(len(figure_b[x]))):
                 is_empty = (figure_b[x][y] == '-')
                 if not is_empty:
-                    cell = Cell(x + World.OFFSET + figure_x_offset, y + World.OFFSET + figure_y_offset)
-                    self.field[x + World.OFFSET + figure_x_offset][y + World.OFFSET + figure_y_offset] = cell
-                    self.potential_changes.add((cell.x, cell.y))
-                    self.potential_changes.update(self.get_neighbour_set(cell.x, cell.y))
+                    cell_x = x + World.OFFSET + figure_x_offset - (len(figure_b) - 1)
+                    cell_y = y + World.OFFSET + figure_y_offset
+                    self.field[cell_x][cell_y] = World.CELL
+                    self.potential_changes.add((cell_x, cell_y))
+                    self.potential_changes.update(self.get_neighbour_set(cell_x, cell_y))
                     self.life_cell_count += 1
 
         self.prev_gen_cell_number = 0
@@ -64,8 +55,7 @@ class World:
             self.potential_changes.update(self.get_neighbour_set(x, y))
 
         for (x, y) in born_cells:
-            born_cell = Cell(x, y)
-            self.field[x][y] = born_cell
+            self.field[x][y] = World.CELL
             self.potential_changes.add((x, y))
             self.potential_changes.update(self.get_neighbour_set(x, y))
 
@@ -101,7 +91,8 @@ class World:
 
         return result
 
-    def get_neighbour_set(self, x, y):
+    @staticmethod
+    def get_neighbour_set(x, y):
         result = set()
         neighbours = [(x - 1, y), (x - 1, y - 1), (x, y - 1), (x + 1, y - 1), (x + 1, y), (x + 1, y + 1), (x, y + 1), (x - 1, y + 1)]
         for (x, y) in neighbours:
@@ -144,10 +135,11 @@ if __name__ == '__main__':
     acorn = [['-', '-', 'X'], ['X', '-', 'X'], ['-', '-', '-'], ['-', 'X', '-'], ['-', '-', 'X'], ['-', '-', 'X'],
               ['-', '-', 'X']]
 
-    with open('W:/input.txt') as f:
+    with open('/home/ipatrikeev/dev/input.txt') as f:
         x_offset, y_offset = [int(x) for x in f.readline().split()]
 
     world = World(acorn, glider, x_offset, y_offset * -1)
+    # print(world)
     iter_count = 0
     while True:
         world.do_iteration()
@@ -155,5 +147,5 @@ if __name__ == '__main__':
         print(str(iter_count) + ' : ' + str(world.unchanged_gen))
         if world.unchanged_gen >= 5:
             break
-
+    iter_count -= 5
     print(iter_count, world.life_cell_count)
