@@ -1,15 +1,17 @@
+import time
+
+
 class World:
-    MAX_X = 3000
-    MAX_Y = 3000
-    OFFSET = 1400
+    MAX_X = 10000
+    MAX_Y = 10000
+    OFFSET = 5000
     CELL = 'X'
 
     def __init__(self, figure_a, figure_b, figure_x_offset, figure_y_offset):
         self.life_cell_count = 0
         self.field = [[] for i in range(World.MAX_X)]
-        for y in range(World.MAX_Y):
-            for x in range(World.MAX_X):
-                self.field[x].append(None)
+        for x in range(World.MAX_X):
+            self.field[x].extend([None] * World.MAX_Y)
 
         self.potential_changes = set()
         for x in range(len(figure_a)):
@@ -20,7 +22,7 @@ class World:
                     cell_y = y + World.OFFSET
                     self.field[cell_x][cell_y] = World.CELL
                     self.potential_changes.add((cell_x, cell_y))
-                    self.potential_changes.update(self.get_neighbour_set(cell_x, cell_y))
+                    self.potential_changes.update(self.get_neighbours(cell_x, cell_y))
                     self.life_cell_count += 1
 
         for x in range(len(figure_b)):
@@ -31,7 +33,7 @@ class World:
                     cell_y = y + World.OFFSET + figure_y_offset
                     self.field[cell_x][cell_y] = World.CELL
                     self.potential_changes.add((cell_x, cell_y))
-                    self.potential_changes.update(self.get_neighbour_set(cell_x, cell_y))
+                    self.potential_changes.update(self.get_neighbours(cell_x, cell_y))
                     self.life_cell_count += 1
 
         self.prev_gen_cell_number = 0
@@ -52,12 +54,12 @@ class World:
         for (x, y) in died_cells:
             self.field[x][y] = None
             self.potential_changes.add((x, y))
-            self.potential_changes.update(self.get_neighbour_set(x, y))
+            self.potential_changes.update(self.get_neighbours(x, y))
 
         for (x, y) in born_cells:
             self.field[x][y] = World.CELL
             self.potential_changes.add((x, y))
-            self.potential_changes.update(self.get_neighbour_set(x, y))
+            self.potential_changes.update(self.get_neighbours(x, y))
 
         self.life_cell_count += len(born_cells)
         self.life_cell_count -= len(died_cells)
@@ -92,16 +94,13 @@ class World:
         return result
 
     @staticmethod
-    def get_neighbour_set(x, y):
-        result = set()
-        neighbours = [(x - 1, y), (x - 1, y - 1), (x, y - 1), (x + 1, y - 1), (x + 1, y), (x + 1, y + 1), (x, y + 1), (x - 1, y + 1)]
-        for (x, y) in neighbours:
-            norm_x, norm_y = World.normalize_coordinates(x, y)
-            result.add((norm_x, norm_y))
-        return result
+    def get_neighbours(x, y):
+        neighbours = [(x - 1, y), (x - 1, y - 1), (x, y - 1), (x + 1, y - 1), (x + 1, y), (x + 1, y + 1), (x, y + 1),
+                      (x - 1, y + 1)]
+        return neighbours
 
     def is_empty_cell(self, x, y):
-        x, y = World.normalize_coordinates(x, y)
+        # x, y = World.normalize_coordinates(x, y)
         return self.field[x][y] is None
 
     @staticmethod
@@ -135,6 +134,7 @@ if __name__ == '__main__':
     acorn = [['-', '-', 'X'], ['X', '-', 'X'], ['-', '-', '-'], ['-', 'X', '-'], ['-', '-', 'X'], ['-', '-', 'X'],
               ['-', '-', 'X']]
 
+    start = time.time()
     with open('/home/ipatrikeev/dev/input.txt') as f:
         x_offset, y_offset = [int(x) for x in f.readline().split()]
 
@@ -149,3 +149,5 @@ if __name__ == '__main__':
             break
     iter_count -= 5
     print(iter_count, world.life_cell_count)
+    end = time.time()
+    print('exec time: '"%.2f" % round(end - start, 2))
