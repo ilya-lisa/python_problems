@@ -1,37 +1,42 @@
-import math
+class TopologicalSort:
+    def __init__(self, graph):
+        self.temp_marked = set()
+        self.permanent_marked = set()
+        self.result = []
+        self.graph = graph
+        self.unmarked = list(self.graph.keys())
 
-__author__ = 'Patrikeev Ilya'
+    def sort(self):
+        while len(self.unmarked) > 0:
+            unmarked_node = self.unmarked.pop()
+            self.visit(unmarked_node)
+        return self.result
 
-START_X = 10
-START_Y = 10
-
-
-def calcCoordinates(start_x, start_y, angle, radius):
-    x1 = start_x + (math.cos(angle) * radius)
-    y1 = start_y + (math.sin(angle) * radius)
-    return str(x1) + ' ' + str(y1)
-
-
-def getHourAngle(h, m):
-    return (360 + (90 - (h % 12 * 360 / 12))) % 360 - (360 / 12 * m / 60)
-
-
-def getMinuteAngle(m):
-    return (360 + (90 - (m * 360 / 60))) % 360
-
-
-def gradToRad(grad):
-    return grad * math.pi / 180
+    def visit(self, node):
+        if node in self.temp_marked:
+            raise ValueError('Not a DAG graph')
+        if node not in self.permanent_marked:
+            self.temp_marked.add(node)
+            for m in graph[node]:
+                self.visit(m)
+            self.permanent_marked.add(node)
+            self.temp_marked.remove(node)
+            self.result.insert(0, node)
 
 
 if __name__ == "__main__":
-    with open('W:\\input.txt') as f:
-        iterator = iter(f)
-        next(iterator)
-        times = next(iterator).split()
-        for time in times:
-            splitted = time.split(':')
-            hours = splitted[0]
-            minutes = splitted[1]
-            print(calcCoordinates(START_X, START_Y, gradToRad(float(getHourAngle(int(hours), int(minutes)))), 6), end=' ')
-            print(calcCoordinates(START_X, START_Y, gradToRad(float(getMinuteAngle(int(minutes)))), 9), end=' ')
+    graph = dict()
+    with open('C:/cygwin64/home/ipatrikeev/input.txt') as f:
+        n = int(f.readline())
+        for i in range(n):
+            a, b = f.readline().split()
+            if a in graph:
+                graph[a].add(b)
+            else:
+                graph[a] = set()
+                graph[a].add(b)
+            if b not in graph:
+                graph[b] = set()
+
+    tp_sort = TopologicalSort(graph)
+    print(' '.join(tp_sort.sort()))
